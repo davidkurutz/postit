@@ -1,5 +1,6 @@
 class CategoriesController < ApplicationController
-  before_action :require_user, except: [:show]
+  before_action :require_user, only: [:new, :create]
+  
   def new
     @category = Category.new
   end
@@ -11,12 +12,13 @@ class CategoriesController < ApplicationController
       flash[:notice] = "Your category has been created"
       redirect_to root_path
     else
+      flash.now[:alert] = "testing flash alert"
       render :new
     end
   end
 
   def show
-    @category = Category.find(params[:id])
+    @category = Category.find_by(slug: params[:id])
   end
 
   private

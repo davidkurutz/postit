@@ -4,5 +4,3 @@ class Vote < ActiveRecord::Base
 
   validates_uniqueness_of :creator, scope: [:voteable_id, :voteable_type]
 end
-
- 

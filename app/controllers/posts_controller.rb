@@ -1,13 +1,34 @@
 class PostsController < ApplicationController
   before_action :set_post, only: [:show, :edit, :update, :vote]
-  before_action :require_user, except: [:index, :show]
+  before_action :require_user, except: [:index, :show, :edit]
+  before_action :require_editor, only: [:edit, :update]
 
   def index
     @posts = Post.all.sort_by {|p| p.total_votes }.reverse
+
+    respond_to do |format|
+      format.html
+      format.json do 
+        render json: @posts
+      end
+      format.xml do
+        render xml: @posts
+      end
+    end
   end
 
   def show
     @comment = Comment.new
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: @post
+      end
+      format.xml do
+        render xml: @post
+      end
+    end
   end
 
   def new
@@ -40,23 +61,38 @@ class PostsController < ApplicationController
 
   def vote
     vote = Vote.create(voteable: @post, creator: current_user, vote: params[:vote])
+    
+    respond_to do |format|
+      format.html do
+        if vote.valid?
+          flash[:notice] = "Your vote was counted"
+        else
+          flash[:error] = "You can only vote on #{@post.title} once."
+        end
+        redirect_to :back
+      end
 
-    if vote.valid?
-      flash[:notice] = "Your vote was counted."
-    else
-      flash[:error] = "You can only vote for #{@post.title} once."
+      format.js do
+        if vote.valid?
+          flash.now[:notice] = "Your vote was counted"
+        else
+          flash.now[:error] = "You can't vote on #{@post.title} more than once"
+        end
+      end
     end
-
-    redirect_to :back
   end
 
   private
 
   def set_post
-    @post = Post.find(params[:id])
+    @post = Post.find_by(slug: params[:id])
   end
 
   def post_params
     params.require(:post).permit(:title, :url, :description, category_ids: [])
+  end
+
+  def require_editor
+    access_denied unless logged_in? and (@post.creator == current_user || current_user.admin?)
   end
 end

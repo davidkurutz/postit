@@ -1,6 +1,6 @@
 <p>
   <%= render @post.categories %>
-  <% if logged_in? %>
+  <% if logged_in? and (@post.creator == current_user) %>
     <span class="pull-right"><%= link_to '[edit]', edit_post_path(@post) %></span>
   <% end %>
 </p>
